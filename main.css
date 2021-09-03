@@ -1,0 +1,13 @@
+.output {
+  font-weight: bold;/*VAlores calculados em negrito*/
+}
+
+#payment {
+  text-decoration: underline;/*Para elemento com id="payment"*/
+}
+
+#graph {
+  border: solid black 1px;/*O gráfico tem bordas simples*/
+}
+
+th, td {vertical-align: top;} /*Não centraliza células na tabela*/
