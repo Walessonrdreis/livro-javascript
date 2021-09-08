@@ -10,7 +10,7 @@ function calculate(){
   var amount = document.getElemenById("amount");
   var apr = document.getElementById("apr");
   var years = document.getElementById("years");
-  var zipecode = document.getElemenById("zipcode");
+  var zipcode = document.getElemenById("zipcode");
   var payment = document.getElementById("payment");
   var total = document.getElementById("total");
   var totalinterest = document.getElementById("totalinterest");
@@ -57,4 +57,123 @@ function calculate(){
     totalinterest.innerHTML ="";
     chart(); //sem argumentos, apaga o gráfico
   }
+}
+
+// salva a entrada do usuario como propriedade do objeto localStorage. Essas
+//propriedades ainda existirão quando o usuário visitar no futuro
+//Esse recursi de armazenamento não vai fucionar em alguns navegadores (o firefox, por
+//exemplo), se você exucutar o exemploa apartir de uma arquivo local:// URL. Conteudo,
+//funciona com HTTP.
+function save(amount, apr, years, zipcode){
+  if (window.localStorage) {//Só faz isso se o navegador suportar
+    localStorage.loan_amount = amount;
+    localStorage.loan_apr = apr;
+    localStorage.loan_years = years;
+    localStorage.loan_zipcode = zipcode;
+
+  }
+};
+
+//Tenta restaurar os campo automaticamente quando odocumento é carregado
+//pela primeira vez
+window.onload = function(){
+  // se o navegador suporta o localStorage e temos alguns dados armazenados
+  if (window.localStorage && localStorage.loan_amount) {
+document.getElementById("amount").value = localStorege.loan_amount;
+document.getElementById("apr").value = localStorage.loan_apr;
+document.getElementById("years").value = localStoraage.loan_years;
+document.getElementById("zipcode").value = localStorage.loan_zipcode;
+  }
+};
+//Passa a entrada so usuario para um script no lado do servidor (teoricamente) pode
+//retornar
+//uma lista de linkspara financeiras locaisinteressadas em fazer empréstimos. Este 
+//exemplo não contém uma implementação real desse serviço de busca de financeiras. Mas 
+// se o serviço exixtisse, essa função funcionaria com ele.
+function getLenders(amount, apr, years, zipcode){
+//Se o navegador não suportar XMLHttpRequest, não faz nada
+if(!window.XMLHttpRequest) return;
+//localiza o elemento para exibir a lista de finaceiras
+var ad = document.getElementById("lenders");
+if(!ad) return;
+//Codifica a entrada do usuário como parâmetros de consulta em um URL
+var url = "getLenders.php" +          //Url do serviço +
+"?amt=" + encodeURIComponent(amount) +           //dados do usuário na String de consulta
+"&apr=" + encodeURIComponent(apr) +
+"yrs="+ encodeURIComponent(years) +
+"zip=" + encodeURIComponent(zipcode);
+
+//Busca conteúdo desse URL usando o objeto XMHttpRequest
+var req = new XMHttpRequest()  //Inicia um nvo pedido
+req.open("GET",url); //Um pedido GEt da HTTP para o url
+req.send(null); //Envia um pedido sem corpo
+
+//Antes de retornar, registra uma função de rotina de tratamento de evento que será
+//chamada no momento posterior, quando a resposta do servidor de HTTP chegar
+//Esse tipo de programação assíncrona é muito comum em JavaScript do lado do cliente.
+req.onreadystatechage = function(){
+  if (req.readyState == 4 && req.status == 200) {
+    //Se chegamos até aqui, obtivemos uma respostaHTTp válida  e completa
+    var response = req.responseText; //Resposta HTTP como string
+    var lenders = JSON.parse(response);//Analisa em um arry JS
+
+    //Converte o array de objetos lender uma string html
+    var list = "";
+    for(var i = 0; i <lenders.length; i++) {
+      list +="<li><a href=' " + lenders[i].url + " ' > " + 
+      lenders[i].name + "</a>";
+    }
+    //Exibe o código HTML no elemento acima.
+    ad.innerHTML = "ul" + list + "</ul>" ; 
+  }
+}
+}
+
+//Gráfico do saldo devedor mensal, dos juros e do capital em um elemento <canvas>
+//da HTML.
+//Se for chamado sem argumentos, basta apagar qualquer gráfico desenhado anteriormente
+function chart(principal, interest, monthly, payments) {
+  var graph = document.getElementById("graph"); //obtém a marca <canvas>
+  graph.width = graph.width;  //Mágica para apagar e redefinir o elemento
+                               //canvas
+//Se chamamos sem argumento ou se o navegador não suporta
+//Elementos gráficos em um elemento <canvas>, basta retornar agora.
+if (arguments.length == 0 || graph.getContetex) return;   
+
+//obtêm o objeto "contexto" de <canvas> que define a API de desenho
+var g = graph.getContetex("2d"); // Todo desenho é feito com ese objeto
+var width  = graph.width, height = graph.height; // Obtêm o tamanho da tela de 
+//desenho
+
+// Essa funções convertem números de pagamento e valores monetários em pixels
+function paymentToX(n){return n * width/payments;}
+function amountToY(a){return height-(a*height/(monthly*payments*1.05));}
+
+//Os parêmetros são uma linha reta (0,0) a (payments, monthly*payments)
+g.moveTo(paymentToX(0), amountToY(0)); //Começa no canto inferior esquerdo
+g.lineTo(paymentToX(payments), // Desenha até o canto superior direito
+               amountToY(monthly*payments));
+g.lineTo(paymentToX(payments), amountToY(0)); //Para baixo, até o canto
+                           //inferior direito
+g.closePath(); //   E volta ao início
+g.fillStyle = "#f88";Vermelho-claro
+g.fill();  //Preenche o triangulo
+g.font = "bold 12px sans-serif"; //Define a fonte
+g.fillText("Total Interest Payments", 20,20); //desenha o texto na legenda
+
+//O capital acumulado não é linear e é mais complicado de reprentar no gráfico 
+var equity = 0;
+g.beginPath(); //Inicia uma nova figura
+g.moveTo(paymentToX(0), amountToY(0)) //começa no canto inferior 
+                           //esquerdo
+for (var p = 1; p <= payments; p++) {
+  //Para cada pagamento descobre quanto é o juros
+  var thisMonthsInterest = (principal-equity) * interest;
+  equity += (monthly - thisMonthsInterest); // O esto vai para o capital
+  g.lineTo(paymentToX(0),amountToY(0)); // Linha até este ponto
+}                           
+
+
+
+
 }
