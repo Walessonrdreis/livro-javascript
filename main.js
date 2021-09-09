@@ -172,8 +172,47 @@ for (var p = 1; p <= payments; p++) {
   equity += (monthly - thisMonthsInterest); // O esto vai para o capital
   g.lineTo(paymentToX(0),amountToY(0)); // Linha até este ponto
 }                           
+g.lineTo(paymentToX(payments), amountToY(0));// Linha de volta para o eixo x
+g.closePath(); // E volta par ao ponto inicial
+fillStyle = "green"; // agora usa cor verde
+g.fill(); // E preenhe a área ob a curva
+g.fillText("Total Equity", 20,35); // Rotula em verde
 
+// Faz laço novamente, acomo acima, mas representa o saldo devedor como um alinha
+//preta grossa no gráfico
+var bal = principal;
+g.beginPath();
+g.moveTo(paymentToX(0), amountToY(bal));
+for(var p = 1; p <= payments; p++) {
+  var thisMonthsInterest = bal*interest;
+  bal-= (monthly- thisMonthsInterest); // O resto vai par ao capital
+  g.lineTo(paymentToX(p), amountToY(bal)); // Desnha a linha até esse ponto
+}
+g.lineWidth = 3; //Usa uma linha grossa
+g.stroke(); // Desnha a curva de saldo
+g.fillStyle = "black"; // Troca para texto Preto
+g.fillText("Loan Balnce", 20,50); // Entrada de legenda
 
+// agora faz marcações anuais e os números de ano no eixo x
+g.textAlign= "center";
+var y = amountToY(0); // Coordena y do eixo x
+for(var year=1; year*12 <= payments; year++) { // para cada ano
+  var x = paymentToX(year*12); // Calcula a posição da marca
+  g.fillRect(x-0.5,y-3,1,3); // Desenha a marca
+  if (year ==1) g.fillText("year", x,y-5); // Rotula o eixo
+  if (year % 5 == 0 && year*12 !==payments) // Numera acada 5 anos
+  g.fillText(String(year),x, y-5);
+}
 
-
+// Marca valores de pagamento ao longo da marcadireita
+g.textAlign = "right"; // Alinha o texto à direita
+g.textBaseline = "middle"; // Centraliza verticalmente
+var ticks = [monthly*payments, principal]; // Os dois pontos que marcaremos 
+var rightEdge = paymentToX(paymentes); // Coordena x do eixo y
+for(var i = 0; i < ticks.length; i++) {// para um dos dois pontos
+  var y = amountToY(ticks[1]); // Calcula a posição y da marca
+  g.fillRect(rightEdge-3, y-0.5, 3,1); // Desenha a marcação
+  g.fillText(String(ticks[i].toFixed(0))), // e a rotula
+               rightEdge-5, y
+}
 }
